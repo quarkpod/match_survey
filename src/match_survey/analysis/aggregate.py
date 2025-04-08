@@ -39,7 +39,7 @@ class Analyses:
     def find_player_cols(self)
         for player in self.roster:  # roster provided by Config attr
             self.player_cols = [x for x in self.df.columns if player in x]
-            
+ 
     def separate(self) -> None:
         self.num_df = self.df[[x for x in self.df.columns \
             if self.df[x].dtype == float]]
