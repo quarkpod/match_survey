@@ -182,3 +182,9 @@ data/
 matches/
 
 .pypirc
+
+*.vim*
+*.json
+*.npy
+*.csv
+*.txt
