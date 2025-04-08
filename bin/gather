@@ -1,0 +1,23 @@
+import sys
+import argparse
+from ..match_survey.payload.responses import Responses
+
+# Create an ArgumentParser object
+parser = argparse.ArgumentParser(description="gather, analyze, and post match results")
+
+# Add arguments
+parser.add_argument("match_config", type=str, required=True, \
+    help="filename (JSON) for match responses payload")
+parser.add_argument("season_config", type=str, required=True, \
+    help="filename (JSON) for season output payload")
+
+# Parse the arguments
+args = parser.parse_args()
+
+def run():
+    responses = Responses(args.match_config)
+    raw_data = responses.get_responses()
+    print('enjoy!')
+
+if __name__ == '__main__':
+    run()

@@ -16,4 +16,5 @@ setup(
     package_dir={
         project: f'src/{project}'},
     },
+    scripts=['bin/gather']
 )
