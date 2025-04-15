@@ -10,16 +10,16 @@ class BaseBook:
         Config(config_filename).gather_attr(self)
         self.book_strs = list()  # google sheet name or url
         self.client = None  # google sheet client
-        self.set_gs_client()
+        self.authenticate()
 
-    def set_gs_client(self) -> None:
+    def authenticate(self) -> None:
         self.client = gspread.oauth(credentials_filename=self.creds_file)
 
     def read_sheet(self):
         sheet_name = getattr(self, 'sheet_name')
         self.sheet = self.book.worksheet(sheet_name)
 
-    def connect_book(self):
+    def connect(self):
         '''
         connects by book name or url, depending on what is given in config
         book_strs is a class attribute with book name and url keys from config

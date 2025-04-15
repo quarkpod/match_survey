@@ -19,7 +19,7 @@ class Responses(BaseBook):
         self.book_strs = ['match_book_name', 'match_book_url']
 
     def __call__(self, save=False) -> pd.DataFrame:
-        self.connect_book()
+        self.connect()
         self.read_sheet()
         self.read_data()
         self.set_df(save)
