@@ -23,6 +23,12 @@ class Config:
         'season_book_url': str,
         'creds_file': str,
         'season_cols': list,
+        'fotmob_match_url': str,
+        'fbref_team_url': str,
+        'fbref_match_url': str,
+        'description': str,
+        'data_dir': str,
+        'team': str
     }
     def __init__(self, config_filename: str):
         self.config_filename = config_filename
@@ -30,7 +36,10 @@ class Config:
         for k,v in self.config.items():  # attributes for items in config too
             setattr(self, k, v)
         for k,v in self.template.items():  # standard typing for important attr
-            setattr(self, k, v(self.config[k]))
+            try:
+                setattr(self, k, v(self.config[k]))
+            except:
+                print(f"missing {k}")
 
     def load_json(self) -> dict:
         msg = f'{self.config_filename} not found'
