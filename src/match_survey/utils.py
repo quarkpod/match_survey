@@ -1,5 +1,8 @@
+import re
+import sys
 import json
 from pathlib import Path
+from bs4 import BeautifulSoup
 
 def check_path(filename: str, msg=str(), required=True) -> Path:
     try:
@@ -19,3 +22,9 @@ def load_json(filename: str, msg: str, required: bool) -> dict:
     _path = get_path(filename, msg, required)
 
     return json.loads(_path.read_text())
+
+def get_all(element, etype, eterm):
+    return element.find_all(etype, class_=re.compile(eterm))
+
+def get(element, etype, eterm):
+    return element.find(etype, class_=re.compile(eterm))
