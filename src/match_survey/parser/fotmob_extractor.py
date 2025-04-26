@@ -50,15 +50,17 @@ class Teams:
             "name": list(),
             "label": list(),
             "sub_minute": list(),
-            "sub_direction": list()
+            "sub_direction": list(),
+            "rating": list()
         }
 
-    def update_subs(self, index, name, label, minute, direction):
+    def update_subs(self, index, name, label, minute, direction, rating):
         self.subs["team_index"].append(index)
         self.subs["name"].append(name)
         self.subs["label"].append(label)
         self.subs["sub_minute"].append(minute)
         self.subs["sub_direction"].append(direction)
+        self.subs["rating"].append(rating)
 
     def as_df(self, team=[0,1]):
         df = pd.DataFrame(self.subs)
@@ -139,6 +141,7 @@ class FotMobMatch:
                         name = re.sub(r'^\d+', '', name.text)
                     else:
                         print("starter player name not detected")
+                    rating = self.get_player_rating(player_div)
                     minute_sub = str()
                     sub_status = str()
                     for sub_div in get_all(player_div, "div", "SubInOutContainer "):
@@ -146,7 +149,7 @@ class FotMobMatch:
                         if sub_span:
                             minute_sub = sub_span.text.strip()
                             sub_status = "out"
-                    self.teams.update_subs(i, name, "Starter", minute_sub, sub_status)
+                    self.teams.update_subs(i, name, "Starter", minute_sub, sub_status, rating)
 
     def get_bench(self):
         for group_index, bench_section in enumerate(get_all(self.soup, "section", "BenchesContainer ")):
@@ -160,6 +163,7 @@ class FotMobMatch:
                         name = re.sub(r'^\d+', '', name.text)
                     else:
                         print("bench name not detected")
+                    rating = self.get_player_rating(player_div)
                     #print(group_index, team_index, bench_label, name)
                     #if bench_label == 'Manager':
                     #    print(group_index, name, bench_label)
@@ -172,7 +176,7 @@ class FotMobMatch:
                                 #print('is sub')
                                 minute_sub = sub_span.text.strip()
                                 sub_status = "in"
-                    self.teams.update_subs(team_index, name, bench_label, minute_sub, sub_status)
+                    self.teams.update_subs(team_index, name, bench_label, minute_sub, sub_status, rating)
 
     def prepare_team_lineup(self, roster_surname_mapping=dict()):
         team_lineup = self.teams.as_df()
@@ -206,3 +210,14 @@ class FotMobMatch:
     def what_competition_round(self):
         competition_round = get(self.soup, "span", "TournamentTitle ").text
         self.competition, self.round = competition_round.split(' Round ')
+
+    def get_player_rating(self, player_div) -> float:
+        rating = np.nan
+        try:
+            rating_ = get(player_div, "div", "PlayerRating")
+            rating = rating_.find("span").text
+        except:
+            print('could not get rating')
+
+        return rating
+
