@@ -23,6 +23,10 @@ def load_json(filename: str, msg: str, required: bool) -> dict:
 
     return json.loads(_path.read_text())
 
+def save_json(filename:str, msg:str, required:bool, data:dict):
+    _path = get_path(filename, msg, required)
+    Path(_path).write_text(json.dumps(data))
+
 def get_all(element, etype, eterm):
     return element.find_all(etype, class_=re.compile(eterm))
 

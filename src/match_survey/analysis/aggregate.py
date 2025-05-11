@@ -9,10 +9,22 @@ class Analyses:
 
     attributes expected from Config
     - roster
+    - season_book_name
+    - sheet_name
+    - raw_data_file
+    - index_col
+    - player_cols
+    - manager_regex
+    - team_perf_col
+    - opp_perf_col
+    - ref_cols
+    - potm_col
+    - bonus_cols
+    - bonus_types
     '''
     def __init__(self, responses_df: pd.DataFrame, config_filename: str):
         self.df = responses_df
-        Config(config_filenmae).gather_attr(self)
+        Config(config_filename).gather_attr(self)
         self.ratings = None
 
     def prepare(self) -> None:
