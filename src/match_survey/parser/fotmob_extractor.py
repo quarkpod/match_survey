@@ -7,15 +7,19 @@ from pathlib import Path
 from copy import deepcopy
 from bs4 import BeautifulSoup
 from match_survey.connect.base_api_caller import BaseAPICaller
-from match_survey.utils import get, get_all, get_path
+from match_survey.utils import get, get_all, get_path, load_defaults
 
 class FotMobCaller(BaseAPICaller):
-    def __init__(self, config_filename: str):
+    def __init__(self, config_filename: str, defaults_filename: str):
         super().__init__(config_filename)
+        load_defaults(defaults_filename, self)
         self.token = None
+        self.raw_data_file = f'{self.data_dir}wk{self.match_week}_raw_fotmob.html'
         self.raw_data = str()
-        self.raw_data_file = str()
-        self.match = FotMobMatch(self.team, self.fotmob_match_url, self.data_dir)
+        self.read_data()
+        self.soup = None
+        self.prepare_soup()
+        self.match = FotMobMatch(**self.__dict__)
 
     def __call__(self):
         self.match()
@@ -25,21 +29,39 @@ class FotMobCaller(BaseAPICaller):
         pass
 
     def call_api(self):
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(match_url, headers=headers)
-        self.raw_data = response.text
+        if not getattr(self.match, 'response_text', None):
+            headers = {"User-Agent": "Mozilla/5.0"}
+            print(f'scraping {match_url}')
+            response = requests.get(match_url, headers=headers)
+            self.raw_data = response.text
 
     def save_raw_data_file(self):
+        print(f'saving raw data to {self.raw_data_file}')
+        if not self.raw_data:
+            self.raw_data = self.match.response_text
         Path(self.raw_data_file).write_text(self.raw_data, encoding="utf-8")
 
-    def data_soup(self):
+    def prepare_soup(self):
         self.soup = BeautifulSoup(self.raw_data, "lxml")
 
     def read_data(self) -> None:
-        subs = Teams()
-        fmm = FotMobMatch(match_url, soup)
+        print(f'try to read from file: {self.raw_data_file}')
+        if self.raw_data:
+            print('raw_data already set')
+            return
+
+        for kwargs in [{}, {'encoding': 'utf-8'}]:
+            try:
+                self.raw_data = Path(self.raw_data_file).read_text(**kwargs)
+                if self.raw_data:
+                    return
+            except Exception as e:
+                print(e)
+        print(f'could not read from {self.raw_data_file}')
+
 
     def save(self) -> None:
+        self.save_raw_data_file()
         self.match.save()
 
 
@@ -69,15 +91,25 @@ class Teams:
 
 
 class FotMobMatch:
-    def __init__(self, team=str(), match_url=str(), data_dir='.', soup=None):
-        self.team = team
-        self.url = match_url
-        self.data_dir = data_dir
-        self.soup = soup
+    def __init__(self, **kwargs):
+        #team=str(),
+        #match_url=str(),
+        #data_dir='.',
+        #soup=None,
+        #match_week=str(),
+        #campaign=str()):
+        for k,v in kwargs.items():
+            setattr(self, k, v)
+#        self.team = kwargs.get('team')
+        self.url = kwargs['fotmob_match_url']
+#        self.data_dir = data_dir')
+        self.response_text = None
+#        self.soup = soup')
+#        self.match_week = match_week')
         self.ensure_soup()
         # main items to extract
-        self.competition = str()
-        self.round = str()
+        self.competition = kwargs.get('competition', getattr(self, 'campaign', str()))
+        self.round = kwargs.get('round', getattr(self, 'round', str()))
         self.venue = str()
         self.team_is_home = True
         self.teams = Teams()
@@ -95,10 +127,12 @@ class FotMobMatch:
 
     def save(self):
         lineup_filename = f'{self.data_dir}/fotmob_lineup_wk{self.round}.csv'
+        print(f'saving lineup to {lineup_filename}')
         self.lineup.to_csv(lineup_filename, index=False)
         context_filename = f'{self.data_dir}/fotmob_context_wk{self.round}.json'
         msg = ''
         _path = get_path(context_filename, msg, False)
+        print(f'saving context to {_path}')
         _path.write_text(json.dumps(self.context))
 
     def prepare_match_context(self):
@@ -115,6 +149,7 @@ class FotMobMatch:
                 print("Failed to retrieve page")
                 return None
 
+            self.response_text = response.text
             self.soup = BeautifulSoup(response.text, "lxml")
 
     def bench_label(self, group_index):
@@ -209,7 +244,26 @@ class FotMobMatch:
 
     def what_competition_round(self):
         competition_round = get(self.soup, "span", "TournamentTitle ").text
-        self.competition, self.round = competition_round.split(' Round ')
+        comp_parts = competition_round.split(' Round ')
+        if len(comp_parts) == 2:
+            self.competition, self.round = comp_parts
+        else:
+            campaign_detail = get(self.soup, "div", "MiddleGridItem")
+            competition_round = campaign_detail.find("span").text
+            if len(comp_parts) == 2:
+                self.competition, self.round = comp_parts
+
+        try:
+            assert self.competition, 'no competition extracted'
+        except AssertionError as ae:
+            print(ae)
+            self.competition = self.campaign
+
+        try:
+            assert self.round, 'no round extracted'
+        except AssertionError as ae:
+            print(ae)
+            self.round = self.match_week
 
     def get_player_rating(self, player_div) -> float:
         rating = np.nan

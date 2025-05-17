@@ -32,3 +32,18 @@ def get_all(element, etype, eterm):
 
 def get(element, etype, eterm):
     return element.find(etype, class_=re.compile(eterm))
+
+def load_defaults(filename: str, obj):
+    msg = f'Could not load defaults from {filename}'
+    defaults = load_json(filename, msg, False)
+    setattr(obj, 'defaults', defaults)
+    for k,v in defaults.items():
+        if getattr(obj, k, None) is None:
+            print(f'self does not have {k}, giving it {v}')
+            setattr(obj, k, v)
+        try:
+            assert getattr(obj, k, None), f'{k} was not added'
+        except AssertionError as ae:
+            print(ae)
+
+    return obj
