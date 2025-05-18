@@ -14,7 +14,7 @@ class FotMobCaller(BaseAPICaller):
         super().__init__(config_filename)
         load_defaults(defaults_filename, self)
         self.token = None
-        self.raw_data_file = f'{self.data_dir}wk{self.match_week}_raw_fotmob.html'
+        self.raw_data_file = f'{self.data_dir}{self.match_week}_raw_fotmob.html'
         self.raw_data = str()
         self.read_data()
         self.soup = None
@@ -22,6 +22,8 @@ class FotMobCaller(BaseAPICaller):
         self.match = FotMobMatch(**self.__dict__)
 
     def __call__(self):
+        self.call_api()
+        self.save_raw_data_file()
         self.match()
         self.save()
 
@@ -31,8 +33,9 @@ class FotMobCaller(BaseAPICaller):
     def call_api(self):
         if not getattr(self.match, 'response_text', None):
             headers = {"User-Agent": "Mozilla/5.0"}
-            print(f'scraping {match_url}')
-            response = requests.get(match_url, headers=headers)
+            url = getattr(self, 'fotmob_match_url', str())
+            print(f'scraping {url}')
+            response = requests.get(url, headers=headers)
             self.raw_data = response.text
 
     def save_raw_data_file(self):
@@ -50,7 +53,7 @@ class FotMobCaller(BaseAPICaller):
             print('raw_data already set')
             return
 
-        for kwargs in [{}, {'encoding': 'utf-8'}]:
+        for kwargs in [{'encoding': 'utf-8'}, {}]:
             try:
                 self.raw_data = Path(self.raw_data_file).read_text(**kwargs)
                 if self.raw_data:
@@ -126,10 +129,10 @@ class FotMobMatch:
         self.prepare_match_context()
 
     def save(self):
-        lineup_filename = f'{self.data_dir}/fotmob_lineup_wk{self.round}.csv'
+        lineup_filename = f'{self.data_dir}fotmob_lineup_{self.round}.csv'
         print(f'saving lineup to {lineup_filename}')
         self.lineup.to_csv(lineup_filename, index=False)
-        context_filename = f'{self.data_dir}/fotmob_context_wk{self.round}.json'
+        context_filename = f'{self.data_dir}/fotmob_context_{self.round}.json'
         msg = ''
         _path = get_path(context_filename, msg, False)
         print(f'saving context to {_path}')
@@ -141,7 +144,7 @@ class FotMobMatch:
         self.context["fotmob_match_url"] = self.url
 
     def ensure_soup(self):
-        if self.soup is None:
+        if len(self.soup)==0:
             headers = {"User-Agent": "Mozilla/5.0"}
             response = requests.get(self.url, headers=headers)
 
@@ -235,6 +238,8 @@ class FotMobMatch:
         venue_a = get(self.soup, "a", "VenueCSS ")
         if not venue_a:
             print('could not find Venue "a"')
+            self.venue = str()
+            return
 
         venue_span = venue_a.find('span')
         if not venue_span:
