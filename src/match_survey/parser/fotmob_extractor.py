@@ -10,13 +10,15 @@ from match_survey.connect.base_api_caller import BaseAPICaller
 from match_survey.utils import get, get_all, get_path, load_defaults
 
 class FotMobCaller(BaseAPICaller):
-    def __init__(self, config_filename: str, defaults_filename: str):
-        super().__init__(config_filename)
-        load_defaults(defaults_filename, self)
+    def __init__(self, run_name: str, defaults_filename: str):
+        #load_defaults(defaults_filename, self)
+        self.match_week = run_name
+        super().__init__(defaults_filename)
+        self.fotmob_match_url = self.scraper_sites[run_name]['fotmob_url']
+        print(self.fotmob_match_url)
         self.token = None
         self.raw_data_file = f'{self.data_dir}{self.match_week}_raw_fotmob.html'
         self.raw_data = str()
-        self.read_data()
         self.soup = None
         self.prepare_soup()
         self.match = FotMobMatch(**self.__dict__)
@@ -39,12 +41,15 @@ class FotMobCaller(BaseAPICaller):
             self.raw_data = response.text
 
     def save_raw_data_file(self):
-        print(f'saving raw data to {self.raw_data_file}')
         if not self.raw_data:
             self.raw_data = self.match.response_text
-        Path(self.raw_data_file).write_text(self.raw_data, encoding="utf-8")
+        raw_html_file = Path(self.raw_data_file)
+        if not raw_html_file.exists():
+            print(f'saving raw data to {self.raw_data_file}')
+            raw_html_file.write_text(self.raw_data, encoding="utf-8")
 
     def prepare_soup(self):
+        self.read_data()
         self.soup = BeautifulSoup(self.raw_data, "lxml")
 
     def read_data(self) -> None:
@@ -146,6 +151,7 @@ class FotMobMatch:
     def ensure_soup(self):
         if len(self.soup)==0:
             headers = {"User-Agent": "Mozilla/5.0"}
+            print(f'ensuring soup, scraping: {self.url}')
             response = requests.get(self.url, headers=headers)
 
             if response.status_code != 200:
@@ -171,7 +177,8 @@ class FotMobMatch:
                 return _inj_sus
 
     def get_starters_subbed(self):
-        for starters_section in get_all(self.soup, "section", "LineupFieldContainer"):
+        starting_lineups = get_all(self.soup, "section", "LineupFieldContainer")
+        for starters_section in starting_lineups:
             for i, team_div in enumerate(get_all(starters_section, "div", "TeamContainer ")):
                 for player_div in get_all(team_div, "div", "PlayerDiv "):
                     name = get(player_div, "span", "LineupPlayerText ")
@@ -179,7 +186,7 @@ class FotMobMatch:
                         name = re.sub(r'^\d+', '', name.text)
                     else:
                         print("starter player name not detected")
-                    rating = self.get_player_rating(player_div)
+                    rating = self.get_player_rating(player_div, name)
                     minute_sub = str()
                     sub_status = str()
                     for sub_div in get_all(player_div, "div", "SubInOutContainer "):
@@ -190,7 +197,8 @@ class FotMobMatch:
                     self.teams.update_subs(i, name, "Starter", minute_sub, sub_status, rating)
 
     def get_bench(self):
-        for group_index, bench_section in enumerate(get_all(self.soup, "section", "BenchesContainer ")):
+        benches = get_all(self.soup, "section", "BenchesContainer ")
+        for group_index, bench_section in enumerate(benches):
             bench_label = self.bench_label(group_index)
             #print(group_index, bench_label)
             for team_index, bench_ul in enumerate(get_all(bench_section, "ul", "BenchContainer ")):
@@ -201,7 +209,7 @@ class FotMobMatch:
                         name = re.sub(r'^\d+', '', name.text)
                     else:
                         print("bench name not detected")
-                    rating = self.get_player_rating(player_div)
+                    rating = self.get_player_rating(player_div, name)
                     #print(group_index, team_index, bench_label, name)
                     #if bench_label == 'Manager':
                     #    print(group_index, name, bench_label)
@@ -270,13 +278,13 @@ class FotMobMatch:
             print(ae)
             self.round = self.match_week
 
-    def get_player_rating(self, player_div) -> float:
+    def get_player_rating(self, player_div, name) -> float:
         rating = np.nan
         try:
             rating_ = get(player_div, "div", "PlayerRating")
             rating = rating_.find("span").text
         except:
-            print('could not get rating')
+            print(f'could not get rating for {name}')
 
         return rating
 
