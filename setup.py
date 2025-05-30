@@ -14,7 +14,7 @@ setup(
     install_requires=requirements,
     packages=[project],
     package_dir={
-        project: f'src/{project}'},
+        project: f'src/{project}',
     },
     scripts=['bin/gather']
 )
