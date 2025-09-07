@@ -16,5 +16,5 @@ setup(
     package_dir={
         project: f'src/{project}',
     },
-    scripts=['bin/gather']
+    scripts=['bin/gather', 'bin/scrape_fotmob.py']
 )

@@ -2,7 +2,7 @@
 
 import sys
 import argparse
-from src.match_survey.parser.fotmob_extractor import FotMobCaller
+from match_survey.parser.fotmob_extractor import FotMobCaller
 
 
 
@@ -11,12 +11,12 @@ def run():
     parser = argparse.ArgumentParser(description="scrape match data from FotMob")
     
     # Add arguments
-    parser.add_argument("config", type=str, help="filename (JSON) for scraper run")
-    parser.add_argument("defaults", type=str, help="filename (JSON) of default values for all runs")
+    parser.add_argument("run_name", type=str, help="match run name")
+    parser.add_argument("config", type=str, help="filename (JSON) of default values for all runs")
     
     # Parse the arguments
     args = parser.parse_args()
-    FotMobCaller(args.config, args.defaults)()
+    FotMobCaller(args.run_name, args.config)()
     print('enjoy!')
 
 if __name__ == '__main__':
