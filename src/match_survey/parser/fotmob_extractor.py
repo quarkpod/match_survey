@@ -224,9 +224,13 @@ class FotMobMatch:
                                 sub_status = "in"
                     self.teams.update_subs(team_index, name, bench_label, minute_sub, sub_status, rating)
 
+    @property
+    def team_index(self) -> int:
+        return 0 if self.is_home else 1
+
     def prepare_team_lineup(self, roster_surname_mapping=dict()):
         team_lineup = self.teams.as_df()
-        team_filter = 0 if self.is_home else 1
+        team_filter = self.team_index
         team_lineup = team_lineup[team_lineup['team_index']==team_filter]
         team_lineup.loc[:, 'name'] = team_lineup['name'] \
             .apply(lambda x: roster_surname_mapping.get(x, x))
@@ -288,3 +292,6 @@ class FotMobMatch:
 
         return rating
 
+#    def get_score(self):
+#        score = get(self.soup, "span", "MFHeaderStatusScore").text
+#        team_score = score.split(' - ')[self.team_index]
