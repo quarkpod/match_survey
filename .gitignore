@@ -190,3 +190,6 @@ matches/
 *.txt
 *.swp
 *.swo
+settings.json
+*.ipynb
+*__pycache__*
