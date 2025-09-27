@@ -11,8 +11,17 @@ def run():
     parser = argparse.ArgumentParser(description="scrape match data from FotMob")
     
     # Add arguments
-    parser.add_argument("run_name", type=str, help="match run name")
-    parser.add_argument("config", type=str, help="filename (JSON) of default values for all runs")
+    parser.add_argument(
+        "run_name",
+        type=str,
+        help="match run name"
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        help="filename (JSON) of default values for all runs",
+        default='.config.json'
+    )
     
     # Parse the arguments
     args = parser.parse_args()
