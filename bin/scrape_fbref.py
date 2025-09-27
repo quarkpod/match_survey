@@ -45,7 +45,7 @@ def run():
     Example prepared FBRef scraper config:
     fbref_config = {
         "fbref_team_url": "https://fbref.com/en/squads/bd97ac1f/St-Louis-City-Stats",
-        "data_dir": "local_dev/data/",
+        "data_dir": "data/",
         "name_mapping": {
             "Klauss": "Jo\u00e3o Klauss",
             "Mykhi Joyner": "MyKhi Joyner",
