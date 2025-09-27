@@ -27,6 +27,9 @@ class Analyses:
         Config(config_filename).gather_attr(self)
         self.ratings = None
 
+    def __call__(self):
+        self.prepare()
+
     def prepare(self) -> None:
         '''
         find player cols
@@ -48,7 +51,7 @@ class Analyses:
         self.raw_cols = self.df.columns.tolist()
         self.df.columns = [re.sub(r'\s*\(.*\)', '', x) for x in self.df.columns]
 
-    def find_player_cols(self)
+    def find_player_cols(self):
         for player in self.roster:  # roster provided by Config attr
             self.player_cols = [x for x in self.df.columns if player in x]
  
