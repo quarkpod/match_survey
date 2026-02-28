@@ -5,7 +5,6 @@ import argparse
 from match_survey.parser.fotmob_extractor import FotMobCaller
 
 
-
 def run():
     # Create an ArgumentParser object
     parser = argparse.ArgumentParser(description="scrape match data from FotMob")

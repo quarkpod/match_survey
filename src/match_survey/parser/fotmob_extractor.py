@@ -14,7 +14,6 @@ class FotMobCaller(BaseAPICaller):
         #load_defaults(defaults_filename, self)
         self.match_week = run_name
         super().__init__(defaults_filename)
-        self.fotmob_match_url = self.scraper_sites[run_name]['fotmob_url']
         print(self.fotmob_match_url)
         self.token = None
         self.raw_data_file = f'{self.data_dir}{self.match_week}_raw_fotmob.html'
