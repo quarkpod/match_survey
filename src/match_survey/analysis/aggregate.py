@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 from match_survey.payload.base_payload import Config
 
-class Analyses:
+class RawResponses:
     '''
-    analyse responses and create survey pool results for a match
+    supports response handling from survey
 
     attributes expected from Config
     - roster
@@ -25,10 +25,33 @@ class Analyses:
     def __init__(self, responses_df: pd.DataFrame, config_filename: str):
         self.df = responses_df
         Config(config_filename).gather_attr(self)
+        self.played_matches_ago = 0
         self.ratings = None
+        # set in login
+        self._sheets_handler = None
+        # set in get_data
+        self.sheets = None
 
     def __call__(self):
+        self.login()
+        self.get_data()
         self.prepare()
+
+    def login(self) -> None:
+        self._sheets_handler = gspread.service_account()
+
+    def get_data(self) -> None:
+        # match_book_url is in config file
+        self.sheets = self._sheets_handler.open_by_url(self.match_book_url)
+
+    def _get_data(self) -> None:
+        # get sheet name based on the latest sheet
+        # this is context for compiling data at initial prep
+        # so expected to run before next match responses polled
+        def get_sheet_name():
+            sheet_name = self.sheets.fetch_sheet_metadata()['sheets'][played_matches_ago]['properties']['title']
+            return sheet_name
+        self.sheet_name = get_sheet_name(sh)
 
     def prepare(self) -> None:
         '''
